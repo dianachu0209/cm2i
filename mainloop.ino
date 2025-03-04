@@ -1,7 +1,7 @@
 // Ultrasonic sensor pins
-const int trigPin1 = 0, echoPin1 = 0;
-const int trigPin2 = 0, echoPin2 = 0;
-const int trigPin3 = 0, echoPin3 = 0;
+const int trigPin1 = 26, echoPin1 = 34; //A0,A2
+const int trigPin2 = 25, echoPin2 = 39; //A1,A3
+const int trigPin3 = 4, echoPin3 = 36; //A5,A4
 
 // Motor control pins (set to 0 for now)
 const int motor1IN1 = 0;  // IN1 for Motor 1 (H-Bridge 1)
