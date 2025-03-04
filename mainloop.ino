@@ -3,18 +3,18 @@ const int trigPin1 = 26, echoPin1 = 34; //A0,A2
 const int trigPin2 = 25, echoPin2 = 39; //A1,A3
 const int trigPin3 = 4, echoPin3 = 36; //A5,A4
 
-// Motor control pins (set to 0 for now)
-const int motor1IN1 = 0;  // IN1 for Motor 1 (H-Bridge 1)
-const int motor1IN2 = 0;  // IN2 for Motor 1 (H-Bridge 1)
+// Motor control pins, motors 1 and 3 are on the left on hbridge1
+const int motor1IN1 = 13;  // IN1 for Motor 1 (H-Bridge 1)
+const int motor1IN2 = 12;  // IN2 for Motor 1 (H-Bridge 1)
 const int motor2IN1 = 0;  // IN1 for Motor 2 (H-Bridge 1)
 const int motor2IN2 = 0;  // IN2 for Motor 2 (H-Bridge 1)
 
-const int motor3IN1 = 0;  // IN1 for Motor 3 (H-Bridge 2)
-const int motor3IN2 = 0;  // IN2 for Motor 3 (H-Bridge 2)
+const int motor3IN1 = 33;  // IN1 for Motor 3 (H-Bridge 2)
+const int motor3IN2 = 15;  // IN2 for Motor 3 (H-Bridge 2)
 const int motor4IN1 = 0;  // IN1 for Motor 4 (H-Bridge 2)
 const int motor4IN2 = 0;  // IN2 for Motor 4 (H-Bridge 2)
 
-const int motorSleep1 = 0; // Sleep pin for H-Bridge 1
+const int motorSleep1 = 27; // Sleep pin for H-Bridge 1
 const int motorSleep2 = 0; // Sleep pin for H-Bridge 2
 
 // PWM pins for motor speed control
@@ -70,13 +70,13 @@ float measureDistance(int trigPin, int echoPin) {
 }
 
 // Function to set motor speed
-void setMotorSpeed(int motorIN1, int motorIN2, int pwmPin, int speed, bool forward) {
+void setMotorSpeed(int motor1, int motor2, int pwmPin, int speed, bool forward) {
   if (forward) {
-    digitalWrite(motorIN1, HIGH);  // Move forward
-    digitalWrite(motorIN2, LOW);
+    digitalWrite(motor1, HIGH);  // Move forward
+    digitalWrite(motor2, LOW);
   } else {
-    digitalWrite(motorIN1, LOW);   // Move backward
-    digitalWrite(motorIN2, HIGH);
+    digitalWrite(motor1, LOW);   // Move backward
+    digitalWrite(motor2, HIGH);
   }
   ledcWrite(pwmPin, speed);  // Set PWM speed for the motor
 }
