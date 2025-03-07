@@ -4,27 +4,18 @@ const int trigPin2 = 25, echoPin2 = 39; //A1,A3
 const int trigPin3 = 4, echoPin3 = 36; //A5,A4
 
 // Motor control pins, motors 1 and 3 are on the left on hbridge1
-const int motor1IN1 = 13;  // IN1 for Motor 1 (H-Bridge 1)
-const int motor1IN2 = 12;  // IN2 for Motor 1 (H-Bridge 1)
-const int motor2IN1 = 0;  // IN1 for Motor 2 (H-Bridge 1)
-const int motor2IN2 = 0;  // IN2 for Motor 2 (H-Bridge 1)
+const int motor1IN1 = 12;  // IN1 for Motor 1 (H-Bridge 1)
+const int motor1IN2 = 13;  // IN2 for Motor 1 (H-Bridge 1)
+const int motor2IN1 = 17;  // IN1 for Motor 2 (H-Bridge 1)
+const int motor2IN2 = 16;  // IN2 for Motor 2 (H-Bridge 1)
 
 const int motor3IN1 = 33;  // IN1 for Motor 3 (H-Bridge 2)
 const int motor3IN2 = 15;  // IN2 for Motor 3 (H-Bridge 2)
-const int motor4IN1 = 0;  // IN1 for Motor 4 (H-Bridge 2)
-const int motor4IN2 = 0;  // IN2 for Motor 4 (H-Bridge 2)
+const int motor4IN1 = 5;   // IN1 for Motor 4 (H-Bridge 2)
+const int motor4IN2 = 18;  // IN2 for Motor 4 (H-Bridge 2)
 
 const int motorSleep1 = 27; // Sleep pin for H-Bridge 1
-const int motorSleep2 = 0; // Sleep pin for H-Bridge 2
-
-// PWM pins for motor speed control
-const int motor1PWM = 0;  // PWM for Motor 1 (H-Bridge 1)
-const int motor2PWM = 0;  // PWM for Motor 2 (H-Bridge 1)
-const int motor3PWM = 0;  // PWM for Motor 3 (H-Bridge 2)
-const int motor4PWM = 0;  // PWM for Motor 4 (H-Bridge 2)
-
-const int freq = 1000;      // PWM frequency
-const int bits = 8;         // PWM resolution
+const int motorSleep2 = 19; // Sleep pin for H-Bridge 2
 
 void setup() {
   pinMode(trigPin1, OUTPUT);
@@ -52,11 +43,7 @@ void setup() {
   digitalWrite(motorSleep1, HIGH);
   digitalWrite(motorSleep2, HIGH);
 
-  // Attach PWM control for motors directly
-  ledcAttach(motor1PWM, freq, bits);  // Attach PWM to Motor 1
-  ledcAttach(motor2PWM, freq, bits);  // Attach PWM to Motor 2
-  ledcAttach(motor3PWM, freq, bits);  // Attach PWM to Motor 3
-  ledcAttach(motor4PWM, freq, bits);  // Attach PWM to Motor 4
+  Serial.begin(115200);
 }
 
 // Function to measure distance
@@ -69,108 +56,72 @@ float measureDistance(int trigPin, int echoPin) {
   return pulseIn(echoPin, HIGH) * 0.0343 / 2;  // Convert to mm
 }
 
-// Function to set motor speed
-void setMotorSpeed(int motor1, int motor2, int pwmPin, int speed, bool forward) {
+// Function to set motor direction (No PWM)
+void setMotorDirection(int motor1, int motor2, bool forward) {
   if (forward) {
-    digitalWrite(motor1, HIGH);  // Move forward
+    digitalWrite(motor1, HIGH);  
     digitalWrite(motor2, LOW);
   } else {
-    digitalWrite(motor1, LOW);   // Move backward
+    digitalWrite(motor1, LOW);   
     digitalWrite(motor2, HIGH);
   }
-  ledcWrite(pwmPin, speed);  // Set PWM speed for the motor
 }
 
-// Gradual acceleration (ramp up) and deceleration (ramp down) for motors
-void gradualPWM(int motorPWM, int targetSpeed, bool rampUp) {
-  int currentSpeed = 0;
-  int step = (rampUp) ? 5 : -5;  // Speed up (increase) or slow down (decrease)
-  
-  // Gradually increase or decrease speed to the target
-  while ((rampUp && currentSpeed < targetSpeed) || (!rampUp && currentSpeed > targetSpeed)) {
-    currentSpeed += step; 
-    ledcWrite(motorPWM, currentSpeed);
-    delay(20);  // Wait for smooth transition (adjust for your system)
-  }
+// Function to move forward
+void moveForward() {
+  setMotorDirection(motor1IN1, motor1IN2, true);   // Left motors forward
+  setMotorDirection(motor2IN1, motor2IN2, false);  // Right motors backward
+  setMotorDirection(motor3IN1, motor3IN2, true);
+  setMotorDirection(motor4IN1, motor4IN2, false);
+  Serial.println("Moving forward");
 }
 
-// Function to move all motors forward with gradual acceleration
-void moveForward(int speed) {
-  setMotorSpeed(motor1IN1, motor1IN2, motor1PWM, 0, true);  // Start with 0 speed
-  setMotorSpeed(motor2IN1, motor2IN2, motor2PWM, 0, true);  // Start with 0 speed
-  setMotorSpeed(motor3IN1, motor3IN2, motor3PWM, 0, true);  // Start with 0 speed
-  setMotorSpeed(motor4IN1, motor4IN2, motor4PWM, 0, true);  // Start with 0 speed
-  
-  gradualPWM(motor1PWM, speed, true);  // Ramp up speed for Motor 1
-  gradualPWM(motor2PWM, speed, true);  // Ramp up speed for Motor 2
-  gradualPWM(motor3PWM, speed, true);  // Ramp up speed for Motor 3
-  gradualPWM(motor4PWM, speed, true);  // Ramp up speed for Motor 4
+// Function to move backward
+void moveBackward() {
+  setMotorDirection(motor1IN1, motor1IN2, false);  // Left motors backward
+  setMotorDirection(motor2IN1, motor2IN2, true);   // Right motors forward
+  setMotorDirection(motor3IN1, motor3IN2, false);  
+  setMotorDirection(motor4IN1, motor4IN2, true);
+  Serial.println("Moving backward");
 }
 
-// Function to move all motors backward with gradual acceleration
-void moveBackward(int speed) {
-  setMotorSpeed(motor1IN1, motor1IN2, motor1PWM, 0, false);  // Start with 0 speed
-  setMotorSpeed(motor2IN1, motor2IN2, motor2PWM, 0, false);  // Start with 0 speed
-  setMotorSpeed(motor3IN1, motor3IN2, motor3PWM, 0, false);  // Start with 0 speed
-  setMotorSpeed(motor4IN1, motor4IN2, motor4PWM, 0, false);  // Start with 0 speed
-  
-  gradualPWM(motor1PWM, speed, true);  // Ramp up speed for Motor 1
-  gradualPWM(motor2PWM, speed, true);  // Ramp up speed for Motor 2
-  gradualPWM(motor3PWM, speed, true);  // Ramp up speed for Motor 3
-  gradualPWM(motor4PWM, speed, true);  // Ramp up speed for Motor 4
+// Function to turn left
+void turnLeft() {
+  setMotorDirection(motor1IN1, motor1IN2, false);
+  setMotorDirection(motor2IN1, motor2IN2, false);
+  setMotorDirection(motor3IN1, motor3IN2, false);
+  setMotorDirection(motor4IN1, motor4IN2, false);
+  Serial.println("Turning left");
 }
 
-// Function to turn left in place with gradual acceleration
-void turnLeft(int speed) {
-  // Left motors go backward, right motors go forward
-  setMotorSpeed(motor1IN1, motor1IN2, motor1PWM, 0, false);  // Motor 1 backward (Left motor backward)
-  setMotorSpeed(motor2IN1, motor2IN2, motor2PWM, 0, true);   // Motor 2 forward  (Right motor forward)
-  setMotorSpeed(motor3IN1, motor3IN2, motor3PWM, 0, false);  // Motor 3 backward (Left motor backward)
-  setMotorSpeed(motor4IN1, motor4IN2, motor4PWM, 0, true);   // Motor 4 forward  (Right motor forward)
-
-  gradualPWM(motor1PWM, speed, true);  // Ramp up speed for Motor 1
-  gradualPWM(motor2PWM, speed, true);  // Ramp up speed for Motor 2
-  gradualPWM(motor3PWM, speed, true);  // Ramp up speed for Motor 3
-  gradualPWM(motor4PWM, speed, true);  // Ramp up speed for Motor 4
+// Function to turn right
+void turnRight() {
+  setMotorDirection(motor1IN1, motor1IN2, true);  
+  setMotorDirection(motor2IN1, motor2IN2, true);
+  setMotorDirection(motor3IN1, motor3IN2, true);
+  setMotorDirection(motor4IN1, motor4IN2, true);
+  Serial.println("Turning right");
 }
 
-// Function to turn right in place with gradual acceleration
-void turnRight(int speed) {
-  // Left motors go forward, right motors go backward
-  setMotorSpeed(motor1IN1, motor1IN2, motor1PWM, 0, true);   // Motor 1 forward  (Left motor forward)
-  setMotorSpeed(motor2IN1, motor2IN2, motor2PWM, 0, false);  // Motor 2 backward (Right motor backward)
-  setMotorSpeed(motor3IN1, motor3IN2, motor3PWM, 0, true);   // Motor 3 forward  (Left motor forward)
-  setMotorSpeed(motor4IN1, motor4IN2, motor4PWM, 0, false);  // Motor 4 backward (Right motor backward)
-
-  gradualPWM(motor1PWM, speed, true);  // Ramp up speed for Motor 1
-  gradualPWM(motor2PWM, speed, true);  // Ramp up speed for Motor 2
-  gradualPWM(motor3PWM, speed, true);  // Ramp up speed for Motor 3
-  gradualPWM(motor4PWM, speed, true);  // Ramp up speed for Motor 4
-}
-
+// Function to perform a 180-degree turn
 void turn180() {
-  // Perform a 180-degree turn by spinning the motors in opposite directions
-  setMotorSpeed(motor1IN1, motor1IN2, motor1PWM, 0, false);  // Motor 1 backward (Left motor backward)
-  setMotorSpeed(motor2IN1, motor2IN2, motor2PWM, 0, true);   // Motor 2 forward  (Right motor forward)
-  setMotorSpeed(motor3IN1, motor3IN2, motor3PWM, 0, false);  // Motor 3 backward (Left motor backward)
-  setMotorSpeed(motor4IN1, motor4IN2, motor4PWM, 0, true);   // Motor 4 forward  (Right motor forward)
-
-  gradualPWM(motor1PWM, 255, true);  // Ramp up speed for Motor 1
-  gradualPWM(motor2PWM, 255, true);  // Ramp up speed for Motor 2
-  gradualPWM(motor3PWM, 255, true);  // Ramp up speed for Motor 3
-  gradualPWM(motor4PWM, 255, true);  // Ramp up speed for Motor 4
-
-  delay(1000);  // Turn for 1 second (adjust time to match 180-degree turn)
-  
-  stopMotors();  // Stop after turning 180 degrees
+  turnLeft();  // Perform a left turn
+  delay(1000);  // Adjust timing to complete 180-degree rotation
+  stopMotors(); 
+  Serial.println("180-degree turn");
 }
 
-// Function to stop all motors with gradual deceleration
+// Function to stop all motors
 void stopMotors() {
-  gradualPWM(motor1PWM, 0, false);  // Ramp down speed for Motor 1
-  gradualPWM(motor2PWM, 0, false);  // Ramp down speed for Motor 2
-  gradualPWM(motor3PWM, 0, false);  // Ramp down speed for Motor 3
-  gradualPWM(motor4PWM, 0, false);  // Ramp down speed for Motor 4
+  digitalWrite(motor1IN1, LOW);
+  digitalWrite(motor1IN2, LOW);
+  digitalWrite(motor2IN1, LOW);
+  digitalWrite(motor2IN2, LOW);
+  digitalWrite(motor3IN1, LOW);
+  digitalWrite(motor3IN2, LOW);
+  digitalWrite(motor4IN1, LOW);
+  digitalWrite(motor4IN2, LOW);
+  Serial.println("Motors stopped");
 }
 
 bool lastTurnLeft = false;  // Track if the last turn was to the left
@@ -183,30 +134,30 @@ void loop() {
   // Check if there's an obstacle in front
   if (frontDist < 20) {  // If distance in front is less than 20 cm
     if (leftDist > rightDist) {
-      turnLeft(255);  // Turn left if left side is clearer
-      lastTurnLeft = true;  // Remember we turned left
+      turnLeft();  // Turn left if left side is clearer
+      lastTurnLeft = true;  
     } else {
-      turnRight(255);  // Turn right if right side is clearer
-      lastTurnLeft = false;  // Remember we turned right
+      turnRight();  // Turn right if right side is clearer
+      lastTurnLeft = false;  
     }
+    delay(500);  // Short delay to allow turn
   } else {
-    moveForward(255);  // Move forward if no obstacles in front
+    moveForward();  // Move forward if no obstacles in front
   }
 
   // Dead end check: If all directions are blocked, perform a 180-degree turn
   if (frontDist < 20 && leftDist < 20 && rightDist < 20) {
-    stopMotors();  // Stop the motors momentarily
-    delay(500);    // Wait for half a second to stop before turning
+    stopMotors();  
+    delay(500);    
 
-    // Perform a 180-degree turn to avoid retracing steps
     turn180();
 
     // After the 180-degree turn, decide the next move based on sensor readings
     if (leftDist > rightDist) {
-      turnLeft(255);  // If left is clearer, turn left
+      turnLeft();
       lastTurnLeft = true;
     } else {
-      turnRight(255);  // If right is clearer, turn right
+      turnRight();
       lastTurnLeft = false;
     }
   }
